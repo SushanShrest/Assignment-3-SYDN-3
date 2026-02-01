@@ -1,3 +1,5 @@
+import tkinter as tk
+
 from pic_model import PicModel
 from pic_view import PicView
 
@@ -13,4 +15,23 @@ class PicEditor:
         self.setup_gui()
 
     def setup_gui(self):
-        pass
+        self.canvas = tk.Canvas(self.root, width=500, height=400, bg="gray")
+        self.canvas.pack()
+
+        self.view = PicView(self.canvas)
+
+        self.subMenu = tk.Frame(self.root)
+        self.subMenu.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.scaleSlider = tk.Scale(
+            self.root,
+            from_=10,
+            to=200,
+            orient=tk.HORIZONTAL,
+            label="Resize %"
+        )
+        self.scaleSlider.set(100)
+        self.scaleSlider.pack()
+
+ 
+
