@@ -22,6 +22,9 @@ class PicModel:
         self._previousList = [img.copy()]
         self._redoList.clear()
 
+    def getImg(self):
+        return self._presentValue
+
     def addState(self):
         if self._presentValue is not None:
             self._previousList.append(self._presentValue.copy())
