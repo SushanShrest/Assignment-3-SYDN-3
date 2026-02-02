@@ -70,6 +70,71 @@ class PicEditor:
         self.statusbar = tk.Label(self.root, text="  No file", bd=1, relief="sunken", anchor="w")
         self.statusbar.pack(side="bottom", fill="x")
 
+    def uploadAction(self):
+        filename = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp"), ("All", "*.*")])
+        if filename:
+            try:
+                self.model.load(filename)
+                self.filteredPic = self.model.getImg().copy()
+                self.refresh()
+            except Exception as e:
+                messagebox.showerror("Error", f"Cannot open image:\n{e}")
+
+    def refresh(self):
+        self.view.display(self.model.getImg())
+        self.view.updateStatus(self.model.getFileName(), self.model.getDimension())
+
+    def applyAction(self):
+        if self.filteredPic is not None:
+            self.model.setImg(self.filteredPic.copy())
+            self.model.addState() 
+            self.refresh()
+
+    def revertAction(self):
+        if self.model.getRealImg() is not None:
+            confirm = messagebox.askyesno("Confirm", "Reset all changes?")
+            if confirm:
+                original = self.model.getRealImg().copy()
+                self.model.setImg(original)
+                self.filteredPic = original.copy()
+                self.model.addState()
+                self.refresh()
+
+    def saveAction(self):
+        if self.model.getImg() is not None and self.model.getFileName():
+            self.model.save(self.model.getFileName())
+            messagebox.showinfo("Saved", "Success!")
+        else:
+            self.saveAsAction()
+
+    def saveAsAction(self):
+        if self.model.getImg() is None:
+            messagebox.showwarning("Warning", "Nothing to save!")
+            return
+        filename = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("BMP", "*.bmp")])
+        if filename:
+            self.model.save(filename)
+
+    def exitAction(self):
+        if messagebox.askokcancel("Exit", "Close the app?"):
+            self.root.quit()
+
+    def undoAction(self):
+        if self.model.undo():
+            self.filteredPic = self.model.getImg().copy()
+            self.refresh()
+
+    def redoAction(self):
+        if self.model.redo():
+            self.filteredPic = self.model.getImg().copy()
+            self.refresh()
+
+    def filterMenu(self):
+        for w in self.subMenu.winfo_children():
+            w.destroy()
+        tk.Label(self.subMenu, text="Filters", font=("Arial", 10, "bold")).pack(pady=5)
+        tk.Button(self.subMenu, text="Grayscale", command=self.apply_grayscale, width=15).pack(pady=2)
+        tk.Button(self.subMenu, text="Edge Detection", command=self.apply_edges, width=15).pack(pady=2)
 
     def apply_grayscale(self):
         img = self.model.getImg()
@@ -149,19 +214,6 @@ class PicEditor:
         tk.Button(self.subMenu, text="Flip Horizontal", command=lambda: self.flipPic(True), width=15).pack(pady=2)
         tk.Button(self.subMenu, text="Flip Vertical", command=lambda: self.flipPic(False), width=15).pack(pady=2)
 
-    def uploadAction(self): pass
-    def saveAction(self): pass
-    def saveAsAction(self): pass
-    def exitAction(self): self.root.quit()
-
-    def undoAction(self): pass
-    def redoAction(self): pass
-
-    def filterMenu(self): pass
-    def applyAction(self): pass
-    def revertAction(self): pass
-
-
     def rotatePic(self, angle):
         img = self.model.getImg()
         if img is None: return
@@ -180,4 +232,4 @@ if __name__ == "__main__":
     editor = PicEditor(root)
     root.mainloop()
 
-
+git
