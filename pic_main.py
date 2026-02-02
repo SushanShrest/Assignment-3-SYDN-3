@@ -231,5 +231,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     editor = PicEditor(root)
     root.mainloop()
-
-git
