@@ -3,25 +3,29 @@ import numpy as np
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+# Importing our custom classes from the other files
 from pic_model import PicModel
 from pic_view import PicView
 
+# Creating class handleing GUI and applies image edits
 class PicEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("SYDN-3 Photo Editor Assignment-3")
         self.root.geometry("900x650")
 
-        self.model = PicModel()
-        self.filteredPic = None 
+        self.model = PicModel() # Image data and history
+        self.filteredPic = None  # Current preview image
 
-        self.setup_gui()
+        self.setupGUI() # Building GUI
         self.view = PicView(self.picture, self.statusbar)
 
-    def setup_gui(self):
+    def setupGUI(self):
+        # Menu bar and basic layout
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
+        # File menu
         fileMenu = tk.Menu(menubar, tearoff=0)
         fileMenu.add_command(label="Open", command=self.uploadAction)
         fileMenu.add_command(label="Save", command=self.saveAction)
@@ -30,11 +34,13 @@ class PicEditor:
         fileMenu.add_command(label="Exit", command=self.exitAction)
         menubar.add_cascade(label="File", menu=fileMenu)
 
+        # Edit menu
         editMenu = tk.Menu(menubar, tearoff=0)
         editMenu.add_command(label="Undo", command=self.undoAction)
         editMenu.add_command(label="Redo", command=self.redoAction)
         menubar.add_cascade(label="Edit", menu=editMenu)
 
+        # Header and body frames
         header = tk.Frame(self.root)
         header.pack(pady=10)
         tk.Label(header, text="SYDN-03 PhotoEditior", font=("Arial", 18)).pack()
@@ -42,6 +48,7 @@ class PicEditor:
         body = tk.Frame(self.root)
         body.pack(expand=True, fill="both", padx=10)
 
+        # Left-side menu 
         self.menu_frame = tk.Frame(body, bd=2, relief="ridge")
         self.menu_frame.pack(side="left", fill="y", pady=50, padx=10)
 
@@ -49,27 +56,32 @@ class PicEditor:
         tk.Button(self.menu_frame, text="Adjustments", command=self.adjustMenu, width=15).pack(fill="x", pady=5, padx=10)
         tk.Button(self.menu_frame, text="Transform", command=self.transformMenu, width=15).pack(fill="x", pady=5, padx=10)
 
-        canvas_container = tk.Frame(body)
-        canvas_container.pack(side="left", expand=True, padx=10)
+        # Canvas for image display
+        canvasContainer = tk.Frame(body)
+        canvasContainer.pack(side="left", expand=True, padx=10)
 
-        self.picture = tk.Canvas(canvas_container, width=400, height=400, bg="gray")
+        self.picture = tk.Canvas(canvasContainer, width=400, height=400, bg="gray")
         self.picture.pack(expand=True, padx=10, pady=25)
 
-        confirm_box = tk.Frame(canvas_container, bd=2, relief="groove")
-        confirm_box.pack(anchor="center", padx=5, pady=5)
-        tk.Label(confirm_box, text="Press apply to save changes", font=("Arial", 10)).pack(pady=(5, 5), padx=5)
+        # Applying/reverting buttons
+        confirmBox = tk.Frame(canvasContainer, bd=2, relief="groove")
+        confirmBox.pack(anchor="center", padx=5, pady=5)
+        tk.Label(confirmBox, text="Press apply to save changes", font=("Arial", 10)).pack(pady=(5, 5), padx=5)
 
-        btnContainer = tk.Frame(confirm_box)
+        btnContainer = tk.Frame(confirmBox)
         btnContainer.pack(pady=5)
         tk.Button(btnContainer, text="Apply", command=self.applyAction, width=10).pack(side="left", padx=10, pady=5)
         tk.Button(btnContainer, text="Revert All", command=self.revertAction, width=10).pack(side="left", padx=10, pady=5)
 
+        # Sub-menu for filters/adjustments
         self.subMenu = tk.Frame(body, bd=2, relief="groove", width=150)
         self.subMenu.pack(side="right", fill="y", pady=50, padx=10)
 
+        # Status bar at bottom
         self.statusbar = tk.Label(self.root, text="  No file", bd=1, relief="sunken", anchor="w")
         self.statusbar.pack(side="bottom", fill="x")
 
+    # Action
     def uploadAction(self):
         filename = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp"), ("All", "*.*")])
         if filename:
@@ -81,16 +93,19 @@ class PicEditor:
                 messagebox.showerror("Error", f"Cannot open image:\n{e}")
 
     def refresh(self):
+        # Updating both the visual display and the status bar text.
         self.view.display(self.model.getImg())
         self.view.updateStatus(self.model.getFileName(), self.model.getDimension())
 
     def applyAction(self):
+        # Commits the current filter preview to the main model state.
         if self.filteredPic is not None:
             self.model.setImg(self.filteredPic.copy())
             self.model.addState() 
             self.refresh()
 
     def revertAction(self):
+        # Reseting the image to its original state from when it was first opened.
         if self.model.getRealImg() is not None:
             confirm = messagebox.askyesno("Confirm", "Reset all changes?")
             if confirm:
@@ -101,6 +116,7 @@ class PicEditor:
                 self.refresh()
 
     def saveAction(self):
+        # Save current image
         if self.model.getImg() is not None and self.model.getFileName():
             self.model.save(self.model.getFileName())
             messagebox.showinfo("Saved", "Success!")
@@ -108,6 +124,7 @@ class PicEditor:
             self.saveAsAction()
 
     def saveAsAction(self):
+        # Save image to new file
         if self.model.getImg() is None:
             messagebox.showwarning("Warning", "Nothing to save!")
             return
@@ -116,34 +133,40 @@ class PicEditor:
             self.model.save(filename)
 
     def exitAction(self):
+        # --- Undo/Redo ---
         if messagebox.askokcancel("Exit", "Close the app?"):
             self.root.quit()
 
     def undoAction(self):
+        # Calling model undo logic and refreshes view.
         if self.model.undo():
             self.filteredPic = self.model.getImg().copy()
             self.refresh()
 
     def redoAction(self):
+        # Calling model redo logic and refreshes view.
         if self.model.redo():
             self.filteredPic = self.model.getImg().copy()
             self.refresh()
 
     def filterMenu(self):
+        # Displaying the filter selection buttons in the sub-menu.
         for w in self.subMenu.winfo_children():
             w.destroy()
         tk.Label(self.subMenu, text="Filters", font=("Arial", 10, "bold")).pack(pady=5)
-        tk.Button(self.subMenu, text="Grayscale", command=self.apply_grayscale, width=15).pack(pady=2)
-        tk.Button(self.subMenu, text="Edge Detection", command=self.apply_edges, width=15).pack(pady=2)
+        tk.Button(self.subMenu, text="Grayscale", command=self.applyGrayscale, width=15).pack(pady=2)
+        tk.Button(self.subMenu, text="Edge Detection", command=self.applyEdges, width=15).pack(pady=2)
 
-    def apply_grayscale(self):
+    def applyGrayscale(self):
+        # Converting image to grayscale using OpenCV.
         img = self.model.getImg()
         if img is None: return
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.filteredPic = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         self.view.display(self.filteredPic)
 
-    def apply_edges(self):
+    def applyEdges(self):
+        # Appling Canny edge detection algorithm.
         img = self.model.getImg()
         if img is None: return
         edges = cv2.Canny(img, 100, 200)
@@ -151,6 +174,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def adjustMenu(self):
+        # Displaying sliders for blur, brightness, contrast, and scaling.
         for w in self.subMenu.winfo_children():
             w.destroy()
         tk.Label(self.subMenu, text="Adjustments", font=("Arial", 10, "bold")).pack(pady=5)
@@ -174,6 +198,7 @@ class PicEditor:
         tk.Button(self.subMenu, text="Resize", command=self.applyResize, width=15).pack(pady=10)
 
     def applyBlur(self, val):
+        # Appling Gaussian Blur; kernel must be an odd number.
         img = self.model.getImg()
         if img is None: return
         k = int(val) * 2 + 1
@@ -181,6 +206,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def applyBrightness(self, val):
+        #Adjusting brightness by modifying the Value channel in HSV color space.
         img = self.model.getImg()
         if img is None: return
         val = int(val) * 10
@@ -190,6 +216,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def applyContrast(self, val):
+        # Adjusting contrast using alpha scaling.
         img = self.model.getImg()
         if img is None: return
         alpha = 1 + int(val) / 10 
@@ -197,6 +224,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def applyResize(self):
+        # Resizing the image based on the percentage slider.
         img = self.model.getImg()
         if img is None: return
         scale = self.scaleSlider.get()
@@ -206,6 +234,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def transformMenu(self):
+        # Displaying rotation and flipping buttons.
         for w in self.subMenu.winfo_children():
             w.destroy()
         tk.Label(self.subMenu, text="Transform", font=("Arial", 10, "bold")).pack(pady=5)
@@ -215,6 +244,7 @@ class PicEditor:
         tk.Button(self.subMenu, text="Flip Vertical", command=lambda: self.flipPic(False), width=15).pack(pady=2)
 
     def rotatePic(self, angle):
+        # Rotating image based on predefined OpenCV codes.
         img = self.model.getImg()
         if img is None: return
         codes = {90: cv2.ROTATE_90_CLOCKWISE, 180: cv2.ROTATE_180, 270: cv2.ROTATE_90_COUNTERCLOCKWISE}
@@ -222,6 +252,7 @@ class PicEditor:
         self.view.display(self.filteredPic)
 
     def flipPic(self, horizontal):
+        #Fliping image horizontally or vertically.
         img = self.model.getImg()
         if img is None: return
         self.filteredPic = cv2.flip(img, 1 if horizontal else 0)
