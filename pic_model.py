@@ -63,5 +63,3 @@ class PicModel:
             self._presentValue = state.copy()
             return True
         return False
-    
-
