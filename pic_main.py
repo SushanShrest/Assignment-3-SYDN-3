@@ -240,6 +240,7 @@ class PicEditor:
         tk.Label(self.subMenu, text="Transform", font=("Arial", 10, "bold")).pack(pady=5)
         tk.Button(self.subMenu, text="Rotate 90°", command=lambda: self.rotatePic(90), width=15).pack(pady=2)
         tk.Button(self.subMenu, text="Rotate 180°", command=lambda: self.rotatePic(180), width=15).pack(pady=2)
+        tk.Button(self.subMenu, text="Rotate 270°", command=lambda: self.rotatePic(270), width=15).pack(pady=2)
         tk.Button(self.subMenu, text="Flip Horizontal", command=lambda: self.flipPic(True), width=15).pack(pady=2)
         tk.Button(self.subMenu, text="Flip Vertical", command=lambda: self.flipPic(False), width=15).pack(pady=2)
 
